@@ -1,9 +1,10 @@
 name: msml-model
 
-conda_env: conda.yaml
+docker_env:
+  image: farhatfathi/msml-model:latest
 
 entry_points:
   main:
     parameters:
       n_estimators: {type: int, default: 100}
-    command: "python modelling.py --n_estimators {n_estimators}"
+    command: "python main.py --n_estimators {n_estimators}"
