@@ -8,33 +8,31 @@ import argparse
 import mlflow
 import mlflow.sklearn
 
-# 1. Argument parsing dari MLproject
+# Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_estimators", type=int, default=100)
 args = parser.parse_args()
 
-# 2. Load Preprocessed Dataset
-link = 'https://raw.githubusercontent.com/farhatfathi/Eksperimen_SML_Muhammad-Fathi-Farhat/refs/heads/main/preprocessing/df_preprocessed.csv'
-df = pd.read_csv(link)
-df = df.drop('CustomerID', axis=1)
+# Load dataset
+url = 'https://raw.githubusercontent.com/farhatfathi/Eksperimen_SML_Muhammad-Fathi-Farhat/refs/heads/main/preprocessing/df_preprocessed.csv'
+df = pd.read_csv(url)
+df = df.drop(columns=["CustomerID"])
 
-# 3. Split features & target
+# Split data
 X = df.drop("Churn", axis=1)
 y = df["Churn"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# 4. Logging & modelling langsung
-mlflow.set_experiment("churn-prediction")
+# Jangan set_experiment di MLproject mode
+# Mulai run tanpa nested run
+model = RandomForestClassifier(n_estimators=args.n_estimators, random_state=42)
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+acc = accuracy_score(y_test, y_pred)
 
-with mlflow.start_run():
-    model = RandomForestClassifier(n_estimators=args.n_estimators, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
+# Logging param, metric, dan model
+mlflow.log_param("n_estimators", args.n_estimators)
+mlflow.log_metric("accuracy", acc)
+mlflow.sklearn.log_model(model, "model")
 
-    # Logging param, metric, dan model
-    mlflow.log_param("n_estimators", args.n_estimators)
-    mlflow.log_metric("accuracy", acc)
-    mlflow.sklearn.log_model(model, "model")
-
-    print(f"Akurasi model: {acc}")
+print(f"Akurasi model: {acc}")
