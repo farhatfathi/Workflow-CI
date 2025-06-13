@@ -3,31 +3,26 @@ name: Run MLflow Project
 on:
   push:
     paths:
-      - 'MLproject'
+      - 'MLproject/**'
       - '.github/workflows/mlflow-ci.yml'
   workflow_dispatch:
 
 jobs:
-  run-mlflow-project:
+  run-mlflow:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Install conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        auto-update-conda: true
-        python-version: 3.9
-        activate-environment: mlflow-env
-        environment-file: conda.yaml
+        python-version: '3.9'
 
-    - name: Install MLflow (compatible with protobuf)
-      run: |
-        pip install protobuf==3.20.3
-        pip install mlflow==1.25.0
+    - name: Install MLflow
+      run: pip install mlflow==1.25.0 protobuf==3.20.*
 
-    - name: Run MLflow Project
+    - name: Run MLflow project
       run: |
-        mlflow run . -P n_estimators=100 --env-manager=local
+        mlflow run MLproject -P n_estimators=100 --env-manager=local
