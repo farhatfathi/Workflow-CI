@@ -1,4 +1,4 @@
-name: churn-prediction
+name: msml-model
 
 conda_env: conda.yaml
 
