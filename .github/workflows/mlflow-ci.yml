@@ -25,4 +25,4 @@ jobs:
 
     - name: Run MLflow project
       run: |
-        mlflow run MLproject -P n_estimators=100 --env-manager=local
+        mlflow run MLproject -P n_estimators=100 --env-manager=conda
