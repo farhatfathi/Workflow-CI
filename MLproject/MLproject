@@ -1,7 +1,6 @@
 name: msml-model
 
-docker_env:
-  image: farhatfathi/msml-model:latest
+conda_env: conda.yaml
 
 entry_points:
   main:
