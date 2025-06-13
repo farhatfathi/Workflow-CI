@@ -1,4 +1,4 @@
-name: Run MLflow Project with Conda
+name: MLflow CI/CD Workflow
 
 on:
   push:
@@ -8,24 +8,95 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-mlflow-project:
+  build-and-train:
     runs-on: ubuntu-latest
+    environment: Production
+    env:
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+      MLFLOW_TRACKING_URI: "file://${{ github.workspace }}/mlruns"
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-activate-base: false
-        activate-environment: mlflow-env
-        environment-file: MLproject/conda.yaml
-        python-version: 3.9
+      - name: Clean MLflow Directory (Start Fresh)
+        run: |
+          echo "Removing old mlruns directory to ensure a clean start..."
+          rm -rf ./mlruns
+          echo "Directory removed."
 
-    - name: Install MLflow
-      run: pip install mlflow
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    - name: Run MLflow project
-      run: |
-        mlflow run MLproject -P n_estimators=100 --env-manager=conda
+      - name: Install dependencies and setup conda environment
+        run: |
+          sudo apt-get update && sudo apt-get install -y tree
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda env remove --name mlflow-ci-env || true
+          conda env create -n mlflow-ci-env -f MLproject/conda.yaml
+        shell: bash -l {0}
+
+      - name: Run MLflow Project
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate mlflow-ci-env
+          mlflow run MLproject -e main -P n_estimators=100 --experiment-name "Experiment-Mlflow-CI"
+        shell: bash -l {0}
+
+      - name: Inspect MLflow Run Directory
+        if: always()
+        run: |
+          echo "Inspecting content of ./mlruns ..."
+          tree ./mlruns
+
+      - name: Get latest MLflow run_id
+        id: get_run_id
+        shell: bash -l {0}
+        run: |
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate mlflow-ci-env
+          python - <<EOF
+          import os
+          import mlflow
+
+          runs = mlflow.search_runs(
+              experiment_names=["Experiment-Mlflow-CI"],
+              order_by=["attribute.start_time DESC"],
+              max_results=1
+          )
+
+          if not runs.empty:
+              run_id = runs.loc[0, "run_id"]
+              print(f"Latest run_id found: {run_id}")
+              with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+                  fh.write(f"latest_run_id={run_id}\n")
+          else:
+              print("No runs found.")
+          EOF
+
+      - name: Download MLflow Artifact to Folder
+        if: steps.get_run_id.outputs.latest_run_id != ''
+        shell: bash -l {0}
+        run: |
+          mkdir -p downloaded-artifact/
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate mlflow-ci-env
+
+          mlflow artifacts download \
+            --run-id ${{ steps.get_run_id.outputs.latest_run_id }} \
+            --artifact-path model \
+            --dst-path downloaded-artifact/
+
+          echo "Contents of downloaded artifact folder:"
+          tree downloaded-artifact/
+
+      - name: Upload Model Artifact to GitHub Actions
+        if: steps.get_run_id.outputs.latest_run_id != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-artifact-${{ steps.get_run_id.outputs.latest_run_id }}
+          path: downloaded-artifact/model/
