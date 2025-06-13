@@ -1,0 +1,31 @@
+name: Run MLflow Project with Docker
+
+on:
+  push:
+    paths:
+      - 'MLproject/**'
+      - '.github/workflows/mlflow-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  run-mlflow-project:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install MLflow
+      run: pip install mlflow
+
+    - name: Run MLflow project using Docker
+      run: |
+        mlflow run MLproject -A n_estimators=100 \
+          --env-manager=local \
+          --backend=local \
+          --docker-image farhatfathi/msml-model:latest
