@@ -3,7 +3,7 @@ name: Run MLflow Project with Docker
 on:
   push:
     paths:
-      - 'MLflow/**'
+      - 'MLproject/**'
       - '.github/workflows/mlflow-ci.yml'
   workflow_dispatch:
 
@@ -25,7 +25,7 @@ jobs:
 
     - name: Run MLflow project using Docker
       run: |
-        mlflow run ./MLflow/ -P n_estimators=100 \
+        mlflow run ./MLproject -P n_estimators=100 \
           --env-manager=local \
           --backend=local \
           --build-image
