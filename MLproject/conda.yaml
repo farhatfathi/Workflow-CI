@@ -1,10 +1,12 @@
-name: churn-env
+name: mlflow-env
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.9
+  - scikit-learn
+  - pandas
+  - mlflow
   - pip
   - pip:
-      - mlflow==2.19.0
-      - pandas
-      - scikit-learn
+      - any-additional-package-if-needed
