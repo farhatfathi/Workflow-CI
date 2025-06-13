@@ -10,3 +10,4 @@ dependencies:
   - pip
   - pip:
       - protobuf==3.20.*
+      - setuptools==68.2.2
