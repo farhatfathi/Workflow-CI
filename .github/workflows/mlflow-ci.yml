@@ -1,26 +1,27 @@
-name: Run MLflow Project with Conda
+name: MLflow CI
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
 
 jobs:
-  run-mlflow-project:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: "3.9"
-
-      - name: Install MLflow
-        run: pip install mlflow==2.19.0
+          auto-update-conda: true
+          python-version: 3.9
+          activate-environment: mlflow-env
+          environment-file: MLproject/conda.yaml
+          auto-activate-base: false
 
       - name: Run MLflow Project
-        run: mlflow run MLproject -A n_estimators=100
+        run: |
+          conda run -n mlflow-env mlflow run . -e main -P n_estimators=100
