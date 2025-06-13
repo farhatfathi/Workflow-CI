@@ -25,7 +25,7 @@ jobs:
 
     - name: Run MLflow project using Docker
       run: |
-        mlflow run MLflow/ -P n_estimators=100 \
+        mlflow run ./MLflow/ -P n_estimators=100 \
           --env-manager=local \
           --backend=local \
           --build-image
