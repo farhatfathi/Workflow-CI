@@ -6,7 +6,7 @@ dependencies:
   - python=3.9
   - scikit-learn=1.0.2
   - pandas=1.3.5
-  - mlflow=1.25.0
   - pip
   - pip:
-      - cloudpickle  # Tambahan opsional bila error serialization muncul
+      - mlflow==1.25.0
+      - protobuf==3.20.3  # Versi stabil terakhir yang kompatibel
