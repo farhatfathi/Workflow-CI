@@ -1,27 +1,33 @@
-name: MLflow CI
+name: Run MLflow Project with Docker
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    paths:
+      - 'MLproject/**'
+      - '.github/workflows/mlflow-ci.yml'
+  workflow_dispatch:
 
 jobs:
-  build:
+  run-mlflow-project:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          auto-update-conda: true
-          python-version: 3.9
-          activate-environment: mlflow-env
-          environment-file: MLproject/conda.yaml
-          auto-activate-base: false
+          python-version: '3.10'
 
-      - name: Run MLflow Project
+      - name: Install dependencies
         run: |
-          conda run -n mlflow-env mlflow run . -e main -P n_estimators=100
+          pip install --upgrade pip
+          pip install mlflow scikit-learn pandas
+
+      - name: Run MLflow project using Docker
+        run: |
+          mlflow run . -P n_estimators=100 \
+            --env-manager=local \
+            --backend=local \
+            --build-image
