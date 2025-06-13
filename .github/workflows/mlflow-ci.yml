@@ -3,7 +3,7 @@ name: Run MLflow Project
 on:
   push:
     paths:
-      - 'MLproject/**'
+      - 'MLproject'
       - '.github/workflows/mlflow-ci.yml'
   workflow_dispatch:
 
@@ -15,14 +15,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Install conda
+      uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: '3.9'
-
-    - name: Install MLflow
-      run: pip install mlflow==1.25.0
+        auto-update-conda: true
+        python-version: 3.9
+        activate-environment: mlflow-env
+        environment-file: conda.yaml
 
     - name: Run MLflow project
       run: |
-        mlflow run ./MLproject -P n_estimators=100 --env-manager=local
+        mlflow run . -P n_estimators=100 --env-manager=local
