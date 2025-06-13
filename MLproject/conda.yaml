@@ -9,4 +9,4 @@ dependencies:
   - mlflow=1.25.0
   - pip
   - pip:
-      - any-additional-package-if-needed
+      - cloudpickle  # Tambahan opsional bila error serialization muncul
